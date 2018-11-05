@@ -50,6 +50,7 @@ object FakeGraph extends Graph with ProcedureSupport {
         ExecutionFailed(SYNTAX_ERROR, COMPILE_TIME, UNKNOWN_FUNCTION)
       case ExecQuery =>
         StringRecords(List("1"), List(Map("1" -> "1")))
+        //TODO: Fix this
     }
   }
 

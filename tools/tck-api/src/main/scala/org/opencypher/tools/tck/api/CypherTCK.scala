@@ -32,7 +32,7 @@ import java.net.URL
 import java.nio.file.{FileSystems, Files, Paths}
 import java.util
 
-import gherkin.ast.GherkinDocument
+import gherkin.ast.{Feature => GherkinFeature, Examples, GherkinDocument, ScenarioDefinition, ScenarioOutline}
 import gherkin.pickles.{Compiler, Pickle, PickleRow, PickleStep, PickleString, PickleTable}
 import gherkin.{AstBuilder, Parser, TokenMatcher}
 import org.opencypher.tools.tck.SideEffectOps.Diff
@@ -51,6 +51,9 @@ object CypherTCK {
 
   val featuresPath = "/features"
   val featureSuffix = ".feature"
+
+  val scenarioSeparator = "###"
+  val paramSeparator = "#"
 
   private lazy val parser = new Parser[GherkinDocument](new AstBuilder)
   private lazy val matcher = new TokenMatcher
@@ -103,10 +106,44 @@ object CypherTCK {
         throw InvalidFeatureFormatException(s"Could not parse feature from $source: ${error.getMessage}")
     }
     val compiler = new Compiler
-    val pickles = compiler.compile(gherkinDocument).asScala
+
+//    val feature = gherkinDocument.getFeature
+//    val allScenariosList  = feature.getChildren
+//    val newAllScenarios: util.List[ScenarioDefinition] = new util.ArrayList[ScenarioDefinition]()
+//    for (s <- allScenariosList.asScala) {
+//      s match {
+//        case outline: ScenarioOutline => {
+//          outline.getExamples.asScala.foreach(examples => { // yes, there could be multiple EXAMPLES:
+//            val tags = outline.getTags
+//            val location = outline.getLocation
+//            val keyword = outline.getKeyword
+//            val description = outline.getDescription
+//            val steps = outline.getSteps
+//
+//            examples.getTableBody.asScala.foreach(row => {
+//              val newExamples = List(new Examples(examples.getLocation, examples.getTags, examples.getKeyword, examples.getName, examples.getDescription, examples.getTableHeader, List(row).asJava)).asJava
+//              val paramString = {
+//                var result = ""
+//                row.getCells.asScala.foreach(columnCell =>
+//                  result += columnCell.getValue + paramSeparator
+//                )
+//                result
+//              }
+//              val newName = outline.getName + scenarioSeparator + paramString
+//              val newScenario = new ScenarioOutline(tags, location, keyword, newName, description, steps, newExamples)
+//              newAllScenarios.add(newScenario)
+//            })
+//          })
+//        }
+//        case s: ScenarioDefinition => newAllScenarios.add(s)
+//      }
+//    }
+//    val newFeature = new GherkinFeature(feature.getTags, feature.getLocation,feature.getLanguage,feature.getKeyword,feature.getName, feature.getDescription, newAllScenarios)
+    val newDocument = new GherkinDocument(gherkinDocument.getFeature, gherkinDocument.getComments)
+    val pickles = compiler.compile(newDocument).asScala
     // filters out scenarios with @ignore
     val included = pickles.filterNot(tagNames(_) contains "@ignore")
-    val featureName = gherkinDocument.getFeature.getName
+    val featureName = newDocument.getFeature.getName
     val scenarios = included.map(toScenario(featureName, _))
     TCKEvents.setFeature(FeatureRead(featureName, source, featureString))
     Feature(scenarios)

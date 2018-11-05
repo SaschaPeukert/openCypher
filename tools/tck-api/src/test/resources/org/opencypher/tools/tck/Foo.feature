@@ -47,6 +47,38 @@ Feature: Foo
       """
     Then a SyntaxError should be raised at compile time: UnknownFunction
 
+  Scenario Outline: Handle examples
+    Given any graph
+    When executing query:
+      """
+      RETURN <param> as r
+      """
+    Then the result should be:
+      | r    |
+      | <result> |
+    And no side effects
+
+    Examples:
+      | param             | result                  |
+      | 1                 | 1                       |
+      | 'String'          | 'String'                |
+
+  Scenario Outline: Handle multi examples
+    Given any graph
+    When executing query:
+      """
+      RETURN <param> as r, <foo> as f
+      """
+    Then the result should be:
+      | r    | f |
+      | <result> | <foo> |
+    And no side effects
+
+    Examples:
+      | param             | foo      | result                  |
+      | 1                 | 1        | 1                       |
+      | 'String'          | 'String' | 'String'                |
+
   @ignore
   Scenario: Ignored
     Given an unsupported step
